@@ -1,0 +1,293 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>小蜜蜂游戏</title>
+<style type="text/css">
+*{ margin:0; padding:0;}
+li{ list-style:none;}
+#div1{ width:800px; height:600px; overflow:hidden; background:black; margin:20px auto; position:relative;}
+#gameBtn{ color:white; font-size:20px; cursor:pointer; border:1px #FFFFFF solid; width:100px; height:30px; line-height:30px; text-align:center; position:absolute; top:285px; left:350px;}
+
+#score{ color:#FFFFFF; }
+#bee{ position:relative;}
+.enemy1{ width:40px; height:28px; background:url(images/mf1.png) no-repeat; float:left; }
+.enemy2{ width:40px; height:28px; background:url(images/mf2.png) no-repeat; float:left;}
+.enemy3{ width:40px; height:28px; background:url(images/mf3.png) no-repeat; float:left;}
+
+.air1{ width:46px; height:60px; background:url(images/fj.png) no-repeat; position:absolute;}
+.bullet{ width:1px; overflow:hidden; height:10px; background:white; position:absolute;}
+</style>
+</head>
+
+<body>
+<div id="div1">
+	<div id="gameBtn">paly</div>
+</div>
+
+
+<script>
+;(function(){
+	var btn = document.getElementById('gameBtn');
+	btn.onclick = function(){
+		this.style.display = 'none';
+		Game.init('div1');
+	}
+	var Game = {
+		init : function(id){
+			this.oper = document.getElementById(id);
+			this.createScore();
+			this.createAir();
+			this.createEmey(0);
+		},
+		/*创建飞机*/
+		air : {/*飞机子弹的属性*/
+			style : 'air1',
+			bulletStyle : 'bullet'
+		},
+		/*关卡的参数*/
+		gk : [
+			{
+				oMap:[
+ 					{
+						name:'e1',
+						num:'30'
+					},
+					{
+						name:'e2',
+						num:'10'
+					},					
+					{
+						name:'e1',
+						num:'10'
+					}					
+				],
+				colNum:10,
+				iSpeedX:10,
+				iSpeedY:5,
+				times:3000
+			},
+			{
+				oMap:[
+ 					{
+						name:'e1',
+						num:'20'
+					},
+					{
+						name:'e3',
+						num:'10'
+					},					
+					{
+						name:'e2',
+						num:'10'
+					}					
+				],
+				colNum:10,
+				iSpeedX:20,
+				iSpeedY:10,
+				times:2000
+			}	
+		],
+		/* 创建积分 */
+		createScore : function(){
+			var score = document.createElement('div');
+			score.id = 'score';
+			score.innerHTML = '积分<span>0</span>';
+			this.oper.appendChild(score);
+			this.score = score.getElementsByTagName('span')[0];
+		},
+		/*创建敌机*/
+		oEmey : {/*敌机的属性:类名，敌机血值，速度，积分*/
+			'e1':{style:'enemy1',blood:1,speed:5,score:1},
+			'e2':{style:'enemy2',blood:2,speed:7,score:2},
+			'e3':{style:'enemy3',blood:3,speed:10,score:3}
+		},
+		createEmey : function(iNow){
+			var gk = this.gk[iNow],array= [],oLis;
+			this.oUl = document.createElement('ul');
+			this.oUl.id = 'bee';
+			this.oUl.style.width = gk.colNum*40+'px';
+			this.oper.appendChild(this.oUl);
+			this.oUl.style.left = (this.oper.offsetWidth - this.oUl.offsetWidth)/2+'px';
+			var omap = gk['oMap'];
+			
+			document.title = '第'+ (iNow + 1) +'关';
+			alert(document.title);
+			
+			var result = [];
+			for(var j=0,l=omap.length ; j<l ; j++){
+				var len = omap[j]['num'];
+				var name = omap[j]['name'],
+					blood = this.oEmey[name]['blood'],
+					speed = this.oEmey[name]['speed'],
+					score = this.oEmey[name]['score'];
+				name = this.oEmey[name]['style'];
+				for(var i=0 ; i<len ; i++){
+					var oLi = '<li class="'+name+'" blood="'+blood+'" speed="'+speed+'" score="'+score+'"></li>';
+					result.push(oLi);
+				}
+			};
+			this.oUl.innerHTML = result.join('');
+			this.oLis = oLis = this.oUl.getElementsByTagName('li');
+			this.Lislength = this.oLis.length;
+			for(var k= 0,l=this.oLis.length ; k<l ; k++){
+				array.push( [ this.oLis[k].offsetLeft , this.oLis[k].offsetTop ] );
+			}
+			for(var k = 0,l=this.oLis.length ; k<l ; k++ ){
+				this.oLis[k].style.position = 'absolute';
+				this.oLis[k].style.left = array[k][0] + 'px';
+				this.oLis[k].style.top = array[k][1] + 'px';
+			}
+			this.runEnemy(gk);
+		},
+		/*敌机移动*/
+		runEnemy : function(gk){
+			var that = this,
+				l = 0,
+				r = that.oper.offsetWidth-that.oUl.offsetWidth,
+				x = gk.iSpeedX,
+				y = gk.iSpeedY,
+				t = gk.times;
+				
+			that.oUl.timer = setInterval(function(){
+				if(that.oUl.offsetLeft <= l){
+					x = x*-1;
+					that.oUl.style.top = that.oUl.offsetTop + y +'px';	
+				}else if(that.oUl.offsetLeft >= r){
+					x = x*-1;
+					that.oUl.style.top = that.oUl.offsetTop + y +'px';	
+				}
+				that.oUl.style.left = that.oUl.offsetLeft + x +'px';
+			},100);		
+			setTimeout(function(){that.singleMove(t)},t)
+		},
+		/*单个飞机攻击*/
+		singleMove : function(t){
+			var that = this,
+				nowLi = that.oLis[Math.floor(Math.random()*that.oLis.length)],
+				a,b,c,spX,spY,
+				l=that.oLis.length,
+				speed = nowLi.getAttribute('speed');
+			
+			nowLi.timer = setInterval(function(){
+			   a =(that.oAir.offsetLeft + that.oAir.offsetWidth/2) - (nowLi.offsetLeft + nowLi.parentNode.offsetLeft + nowLi.offsetWidth/2);
+			   b = (that.oAir.offsetTop + that.oAir.offsetHeight/2) - (nowLi.offsetTop + nowLi.parentNode.offsetTop + nowLi.offsetHeight/2);
+			   c = Math.sqrt(a*a+b*b);
+			   spX = Math.ceil(speed*a/c);
+			   spY = Math.ceil(speed*b/c);
+			   nowLi.style.left = nowLi.offsetLeft +spX + 'px';
+			   nowLi.style.top =  nowLi.offsetTop+ spY + 'px';
+			   
+			   if (that.collisionDdetection(that.oAir,nowLi)){
+					clearInterval(that.temer);
+					alert('GAME OVER');
+					window.location.reload();
+			   };
+			},30);
+			if(l<that.Lislength){
+				setTimeout(function(){that.singleMove(t)},t);
+			}
+		},
+		/*创建飞机*/
+		createAir : function(){
+			var oAir = document.createElement('div');
+			oAir.className = this.air.style;
+			this.oper.appendChild(oAir);
+			oAir.style.left = (this.oper.offsetWidth - oAir.offsetWidth)/2 + 'px';
+			oAir.style.top = this.oper.offsetHeight - oAir.offsetHeight + 'px';
+			this.oAir = oAir;
+			this.bindAir();
+		},
+		/*飞机的移动*/
+		bindAir : function(){
+			var that = this,
+				ol = 0,
+				or = that.oper.offsetWidth - that.oAir.offsetWidth;
+			document.onkeydown = function(event){
+				var e = window.event || event;
+				if(e.keyCode == 37){
+					that.oAir.style.left = that.oAir.offsetLeft - 10 + 'px';
+				}else if(e.keyCode == 39){
+					that.oAir.style.left = that.oAir.offsetLeft + 10 + 'px';
+				};
+				(that.oAir.offsetLeft < ol ) && (that.oAir.style.left = ol +'px');
+				(that.oAir.offsetLeft > or ) && (that.oAir.style.left = or +'px');
+			};
+			document.onkeyup = function(event){
+				var e = window.event || event;
+				if(e.keyCode == 32){
+					that.createBullet();
+				}
+			}
+		},
+		/*创建子弹*/
+		createBullet : function(){
+			var oB = document.createElement('div');
+			oB.className = this.air.bulletStyle;
+			this.oper.appendChild(oB);
+			oB.style.left = this.oAir.offsetLeft + this.oAir.offsetWidth/2 + 'px';
+			oB.style.top = this.oAir.offsetTop-oB.offsetHeight + 'px';
+			this.runBullet(oB);
+		},
+		/*子弹的运动*/
+		runBullet : function(oB){
+			var that = this,list = that.oLis;
+			oB.timer = setInterval(function(){
+				var t = oB.offsetTop - 10 ;
+				if(t < -oB.offsetHeight){
+					clearInterval(oB.timer);
+					that.oper.removeChild(oB);
+				}else{
+					oB.style.top = t +'px';
+					for (var i=0,leng = list.length; i< leng; i++){
+						if (that.collisionDdetection(oB,list[i])){
+							var blood = parseInt(list[i].getAttribute('blood'),10);
+							if( blood == 1){
+								that.score.innerHTML = parseInt(that.score.innerHTML,10) + parseInt(list[i].getAttribute('score'),10);
+								clearInterval(list[i].timer);
+								clearInterval(oB.timer);//待改进
+								that.oUl.removeChild(list[i]);
+								that.oper.removeChild(oB);
+								return;//删除后记得退出，前面保存的循环变量为没删前的数字
+							}else{
+								blood--;
+								list[i].setAttribute('blood',blood);
+								clearInterval(oB.timer) ;
+								that.oper.removeChild(oB);
+							};
+						}
+					};
+				};	
+				if (!that.oLis.length){
+					that.createEmey(1);
+				};	
+				
+			},30);
+		},
+		/*碰撞检测
+		obj1碰撞物体
+		obj2被碰撞物体
+		*/
+		collisionDdetection : function(obj1,obj2){
+			var L1 = obj1.offsetLeft,
+				R1 = obj1.offsetLeft + obj1.offsetWidth, 
+				T1 = obj1.offsetTop,
+				B1 = obj1.offsetTop + obj1.offsetHeight,
+			    L2 = obj2.offsetLeft + obj2.parentNode.offsetLeft,
+				R2 = obj2.offsetLeft + obj2.offsetWidth + obj2.parentNode.offsetLeft,
+				T2 = obj2.offsetTop + obj2.parentNode.offsetTop,
+				B2 = obj2.offsetTop + obj2.offsetHeight + obj2.parentNode.offsetTop;
+				
+			if(R1<L2 || L1>R2 || B1<T2 || T1>B2 ){/*不碰到的情况下*/
+				return false;
+			}else{
+				return true;
+			};
+		},
+	}
+})()
+
+
+</script>
+</body>
+</html>
